@@ -1,24 +1,45 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import { Layout } from "antd";
+import "./App.css";
+import AppHeader from "./components/AppHeader";
+import SideMenu from "./components/SideMenu";
+import PageContent from "./components/PageContent";
+import AppFooter from "./components/AppFooter";
+
+const { Sider, Content } = Layout;
 
 function App() {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <Layout className="App" style={{ minHeight: "100vh" }}>
+      <AppHeader />
+      <Layout className="SideMenuAndPageContent">
+        <Sider 
+          width={collapsed ? 80 : 250} 
+          style={{ 
+            background: "#fff", 
+            transition: "width 0.3s" 
+          }}
         >
-          Learn React
-        </a>
-      </header>
-    </div>
+          <SideMenu 
+            collapsed={collapsed} 
+            onCollapse={setCollapsed} 
+          />
+        </Sider>
+        <Content 
+          style={{ 
+            padding: "20px", 
+            backgroundColor: "#fff",
+            width: `calc(100% - ${collapsed ? 80 : 250}px)`,
+            transition: "width 0.3s"
+          }}
+        >
+          <PageContent />
+        </Content>
+      </Layout>
+      <AppFooter />
+    </Layout>
   );
 }
 
