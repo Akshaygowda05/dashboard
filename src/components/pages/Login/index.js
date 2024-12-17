@@ -1,51 +1,73 @@
-// src/pages/Login/index.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Hook for navigation
+import { Form, Input, Button, message } from 'antd';
 
-const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate(); // useNavigate hook to redirect after login
-
-  const handleLogin = (e) => {
-    e.preventDefault(); // Prevent form reload
-
-    // Check credentials (this is a simple example, replace with proper validation)
+const Login = ({ onLogin }) => {
+  const handleLogin = (values) => {
+    const { username, password } = values;
+    
+    // Hardcoded credentials check
     if (username === 'admin' && password === 'admin') {
-      navigate('/'); // Redirect to home page on success
+      // Call the onLogin prop passed from parent
+      onLogin();
     } else {
-      setError('Invalid username or password');
+      message.error('Invalid username or password');
     }
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        {error && <div className="error-message">{error}</div>}
-        <button type="submit">Login</button>
-      </form>
+    <div 
+      style={{
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        backgroundColor: '#f0f2f5'
+      }}
+    >
+      <Form
+        name="login"
+        style={{
+          width: 300,
+          padding: 24,
+          backgroundColor: 'white',
+          borderRadius: 8,
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+        }}
+        onFinish={handleLogin}
+      >
+        <h2 style={{ 
+          textAlign: 'center', 
+          marginBottom: 24,
+          color: '#0DB39E'
+        }}>
+          Login
+        </h2>
+        <Form.Item
+          name="username"
+          rules={[{ required: true, message: 'Please input your username!' }]}
+        >
+          <Input placeholder="Username" />
+        </Form.Item>
+        <Form.Item
+          name="password"
+          rules={[{ required: true, message: 'Please input your password!' }]}
+        >
+          <Input.Password placeholder="Password" />
+        </Form.Item>
+        <Form.Item>
+          <Button 
+            type="primary" 
+            htmlType="submit" 
+            style={{ 
+              width: '100%', 
+              backgroundColor: '#0DB39E', 
+              borderColor: '#0DB39E' 
+            }}
+          >
+            Log in
+          </Button>
+        </Form.Item>
+      </Form>
     </div>
   );
 };

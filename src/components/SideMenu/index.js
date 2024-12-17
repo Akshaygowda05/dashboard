@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { Menu } from 'antd';
-import {
-  HomeOutlined,
-  LaptopOutlined,
-  DeploymentUnitOutlined,
-  BarChartOutlined,
-  MenuUnfoldOutlined,
-  MenuFoldOutlined
-} from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Menu } from 'antd';
+import { 
+  LaptopOutlined, 
+  DeploymentUnitOutlined, 
+  LogoutOutlined, 
+  MenuUnfoldOutlined, 
+  MenuFoldOutlined, 
+  RobotOutlined,
+  HomeOutlined,
+  BarChartOutlined
+} from '@ant-design/icons';
 
-const SideMenu = ({ collapsed, onCollapse }) => {
+const SideMenu = ({ collapsed, onCollapse, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -33,9 +35,15 @@ const SideMenu = ({ collapsed, onCollapse }) => {
       color: '#0DB39E'
     },
     {
-      label: 'Multicast Group',
+      label: 'Scheduler',
       key: '/multicast',
       icon: <DeploymentUnitOutlined />,
+      color: '#0DB39E'
+    },
+    {
+      label: 'RobotStatus',
+      key: '/robotStatus',
+      icon: <RobotOutlined />,
       color: '#0DB39E'
     },
     {
@@ -43,11 +51,19 @@ const SideMenu = ({ collapsed, onCollapse }) => {
       key: '/reports',
       icon: <BarChartOutlined />,
       color: '#0DB39E'
-    }
+    },
+    {
+      label: 'Logout',
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      onClick: onLogout
+    },
   ];
 
-  const handleMenuClick = ({ key }) => {
-    navigate(key);
+  const handleMenuClick = (item) => {
+    if (item.key !== 'logout') {
+      navigate(item.key);
+    }
   };
 
   return (
@@ -61,25 +77,26 @@ const SideMenu = ({ collapsed, onCollapse }) => {
         boxShadow: '2px 0 8px rgba(0,0,0,0.06)',
         display: 'flex',
         flexDirection: 'column',
-        position: 'relative'  // Ensures the absolute positioning works for the toggle button
+        position: 'relative'
       }}
     >
-      {/* Toggle Collapse Button (Positioned to the top-right) */}
+      {/* Toggle Collapse Button */}
       <div 
         className="menu-toggle"
         onClick={toggleCollapsed}
         style={{
-          position: 'absolute',  // This positions the button absolutely inside the sidebar
-          top: '16px',           // Adjusts the distance from the top
-          right: '16px',         // Adjusts the distance from the right side
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
           padding: '8px',
           cursor: 'pointer',
-          backgroundColor: '#F5F5F5',
+          backgroundColor: 'transparent',
           border: 'none',
-          zIndex: 1,             // Ensure it's above other content
+          zIndex: 1,
         }}
+        aria-label={collapsed ? "Expand menu" : "Collapse menu"}
       >
-        {collapsed ? <MenuUnfoldOutlined style={{ fontSize: '24px',}} /> : <MenuFoldOutlined style={{ fontSize: '24px',}} />}
+        {collapsed ? <MenuUnfoldOutlined style={{ fontSize: '24px' }} /> : <MenuFoldOutlined style={{ fontSize: '24px' }} />}
       </div>
       
       {/* Menu */}
@@ -88,7 +105,7 @@ const SideMenu = ({ collapsed, onCollapse }) => {
         inlineCollapsed={collapsed}
         onClick={handleMenuClick}
         style={{ 
-          marginTop:'50px',
+          marginTop: '50px',
           backgroundColor: 'transparent', 
           border: 'none', 
           flex: 1 
@@ -107,14 +124,14 @@ const SideMenu = ({ collapsed, onCollapse }) => {
                   ? 'rgba(13, 179, 158, 0.1)' 
                   : 'transparent'),
               display: 'flex',
-              justifyContent: 'center',  // Align content to the right
+              justifyContent: 'center',
               alignItems: 'center',
               padding: '10px 16px',
             }}
             onMouseEnter={() => setHoveredItem(item.key)}
             onMouseLeave={() => setHoveredItem(null)}
+            onClick={item.onClick || (() => {})}
           >
-            {/* Icon */}
             {React.cloneElement(item.icon, {
               style: {
                 color: location.pathname === item.key
@@ -123,11 +140,10 @@ const SideMenu = ({ collapsed, onCollapse }) => {
                     ? '#0DB39E' 
                     : '#8C8C8C'),
                 fontSize: '18px',
-                marginRight: collapsed ? '8px' : '12px',  // Adjust the margin based on collapsed state
+                marginRight: collapsed ? '0' : '12px',
                 transition: 'color 0.3s ease'
               }
             })}
-            {/* Label */}
             {!collapsed && (
               <span 
                 style={{

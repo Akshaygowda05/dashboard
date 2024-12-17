@@ -82,7 +82,7 @@ function Devices() {
                       onClick={() => toggleDeviceDownlink(device.devEui, "gohome")}
                       className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm"
                     >
-                      Go Home
+                      ReturnToDock
                     </button>
                     <button
                       onClick={() => navigate(`/device/${device.devEui}`)} // Navigate to device details

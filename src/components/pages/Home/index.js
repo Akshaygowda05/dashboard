@@ -27,8 +27,7 @@ import {
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     multicastGroups: {
-      totalCount: 0,
-      result: []
+      totalCount: 0
     },
     devices: {
       totalCount: 0,
@@ -37,6 +36,20 @@ const Dashboard = () => {
     },
     performanceData: []
   });
+
+    const isDeviceActive = (device) => {
+    // Check if device has no lastSeenAt or deviceStatus is null
+    if (!device.lastSeenAt || device.deviceStatus === null) return false;
+
+    // Check time difference
+    const lastSeenDate = new Date(device.lastSeenAt);
+    const currentTime = new Date();
+    const timeDifference = currentTime - lastSeenDate;
+    
+    // Consider device inactive if not seen in last 30 minutes
+    return timeDifference <= 1800000; // 30 minutes in milliseconds
+  };
+
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -48,61 +61,61 @@ const Dashboard = () => {
         const devicesResponse = await axios.get('http://localhost:5000/api/devices');
         const devices = devicesResponse.data.result;
         
+        // Count devices
         const totalDevices = devices.length;
-        const activeDevices = devices.filter(device => 
-          device.lastSeenAt !== null && 
-          device.deviceStatus !== null
-        ).length;
+        const activeDevices = devices.filter(isDeviceActive).length;
         const inactiveDevices = totalDevices - activeDevices;
 
-        // Fetch Performance Data
-        const performanceResponse = await axios.get('http://localhost:5000/api/robot-performance/last-7-days');
+        // Attempt to fetch performance data
+        let performanceData = [];
+        try {
+          const performanceResponse = await axios.get('http://localhost:5000/api/robot-performance/last-7-days');
+          performanceData = performanceResponse.data;
+        } catch (performanceError) {
+          console.warn('No performance data available:', performanceError);
+        }
 
         setDashboardData({
-          multicastGroups: multicastResponse.data,
+          multicastGroups: {
+            totalCount: multicastResponse.data.totalCount
+          },
           devices: {
             totalCount: totalDevices,
             activeCount: activeDevices,
             inactiveCount: inactiveDevices
           },
-          performanceData: performanceResponse.data
+          performanceData: performanceData
         });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
     };
 
-    // Initial fetch
     fetchDashboardData();
-
-    // Set up polling every 5 minutes
     const intervalId = setInterval(fetchDashboardData, 5 * 60 * 1000);
-
-    // Cleanup interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
 
-  // Card styles
   const cardStyles = {
     multicastGroups: {
-      background: 'linear-gradient(145deg, #e6f2ff, #b3d9ff)', // Light blue
+      background: 'linear-gradient(145deg, #e6f2ff, #b3d9ff)',
       icon: { color: '#1976d2' }
     },
     totalDevices: {
-      background: 'linear-gradient(145deg, #f0f0f0, #e0e0e0)', // Light gray
+      background: 'linear-gradient(145deg, #f0f0f0, #e0e0e0)',
       icon: { color: '#616161' }
     },
     activeDevices: {
-      background: 'linear-gradient(145deg, #e6ffe6, #b3ffb3)', // Light green
+      background: 'linear-gradient(145deg, #e6ffe6, #b3ffb3)',
       icon: { color: '#2e7d32' }
     },
     inactiveDevices: {
-      background: 'linear-gradient(145deg, #ffebee, #ffcdd2)', // Light red
+      background: 'linear-gradient(145deg, #ffebee, #ffcdd2)',
       icon: { color: '#d32f2f' }
     }
   };
 
-  // Render card component
+  // Render card component (unchanged)
   const renderStatCard = (title, count, style, Icon) => (
     <Grid item xs={12} sm={6} md={3}>
       <Card 
@@ -135,35 +148,28 @@ const Dashboard = () => {
     </Grid>
   );
 
-  return (
+   return (
     <Box sx={{ flexGrow: 1, p: 2 }}>
       {/* Statistics Cards */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        {/* Multicast Groups Card */}
         {renderStatCard(
           'Multicast Groups', 
           dashboardData.multicastGroups.totalCount, 
           cardStyles.multicastGroups, 
           DeviceHubIcon
         )}
-
-        {/* Total Devices Card */}
         {renderStatCard(
           'Total Devices', 
           dashboardData.devices.totalCount, 
           cardStyles.totalDevices, 
           DevicesIcon
         )}
-
-        {/* Active Devices Card */}
         {renderStatCard(
           'Active Devices', 
           dashboardData.devices.activeCount, 
           cardStyles.activeDevices, 
           ActiveIcon
         )}
-
-        {/* Inactive Devices Card */}
         {renderStatCard(
           'Inactive Devices', 
           dashboardData.devices.inactiveCount, 
