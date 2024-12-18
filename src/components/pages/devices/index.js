@@ -1,3 +1,4 @@
+import { RobotFilled } from "@ant-design/icons";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -45,7 +46,9 @@ function Devices() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Devices</h1>
+      <h1 className="text-2xl font-bold mb-4">
+  Robot's <span className="inline-block align-middle"><RobotFilled className="text-2xl" /></span>
+</h1>
       {loading ? (
         <p>Loading devices...</p>
       ) : (
@@ -53,7 +56,7 @@ function Devices() {
           <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
             <thead>
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Device Name</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Robot Name</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Last Seen</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Description</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-900">Actions</th>

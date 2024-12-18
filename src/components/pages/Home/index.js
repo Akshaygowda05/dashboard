@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
+  BarChart, 
+  Bar, 
   LineChart, 
   Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Legend, 
   ResponsiveContainer 
 } from 'recharts';
 import axios from 'axios';
@@ -15,7 +16,8 @@ import {
   CardContent, 
   Typography, 
   Grid, 
-  Box 
+  Box, 
+  Paper
 } from '@mui/material';
 import { 
   DeviceHub as DeviceHubIcon,
@@ -26,54 +28,109 @@ import {
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
-    multicastGroups: {
-      totalCount: 0
+    multicastGroups: { totalCount: 0 },
+    devices: { 
+      totalCount: 0, 
+      activeCount: 0, 
+      inactiveCount: 0 
     },
-    devices: {
-      totalCount: 0,
-      activeCount: 0,
-      inactiveCount: 0
-    },
-    performanceData: []
+    performanceData: [],
+    energyStats: {
+      totalEnergyGenerated: 0,
+      totalPanelsCleaned: 0
+    }
   });
 
-    const isDeviceActive = (device) => {
-    // Check if device has no lastSeenAt or deviceStatus is null
-    if (!device.lastSeenAt || device.deviceStatus === null) return false;
-
-    // Check time difference
-    const lastSeenDate = new Date(device.lastSeenAt);
-    const currentTime = new Date();
-    const timeDifference = currentTime - lastSeenDate;
-    
-    // Consider device inactive if not seen in last 30 minutes
-    return timeDifference <= 1800000; // 30 minutes in milliseconds
+  // Color Palette
+  const colors = {
+    primary: '#3f51b5',
+    secondary: '#f50057',
+    success: '#4caf50',
+    info: '#2196f3',
+    warning: '#ff9800',
+    background: '#f4f6f8'
   };
 
+  // Limit data points for better visualization
+  const limitDataPoints = (data, maxPoints = 7) => {
+    if (data.length <= maxPoints) return data;
+    
+    // Take last 7 data points
+    return data.slice(-maxPoints);
+  };
+
+  // Styled Card Component
+  const StatCard = ({ 
+    title, 
+    value, 
+    icon: Icon, 
+    color = colors.primary 
+  }) => (
+    <Paper 
+      elevation={3} 
+      sx={{ 
+        p: 2, 
+        display: 'flex', 
+        alignItems: 'center', 
+        borderRadius: 2,
+        background: `linear-gradient(145deg, ${color}33, ${color}11)`
+      }}
+    >
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        mr: 2 
+      }}>
+        <Icon 
+          sx={{ 
+            fontSize: 40, 
+            color: color,
+            opacity: 0.7 
+          }} 
+        />
+      </Box>
+      <Box>
+        <Typography 
+          variant="subtitle2" 
+          color="text.secondary"
+          sx={{ lineHeight: 1 }}
+        >
+          {title}
+        </Typography>
+        <Typography 
+          variant="h5" 
+          fontWeight="bold" 
+          color="text.primary"
+        >
+          {value}
+        </Typography>
+      </Box>
+    </Paper>
+  );
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch Multicast Groups
-        const multicastResponse = await axios.get('http://localhost:5000/api/multicast-groups');
-        
-        // Fetch Devices
-        const devicesResponse = await axios.get('http://localhost:5000/api/devices');
+        // Fetch data from your APIs
+        const [
+          multicastResponse,
+          devicesResponse,
+          performanceResponse
+        ] = await Promise.all([
+          axios.get('http://localhost:5000/api/multicast-groups'),
+          axios.get('http://localhost:5000/api/devices'),
+          axios.get('http://localhost:5000/api/robot-performance/last-7-days')
+        ]);
+
         const devices = devicesResponse.data.result;
-        
-        // Count devices
         const totalDevices = devices.length;
-        const activeDevices = devices.filter(isDeviceActive).length;
+        const activeDevices = devices.filter(device => 
+          device.lastSeenAt && 
+          (new Date() - new Date(device.lastSeenAt)) <= 1800000
+        ).length;
         const inactiveDevices = totalDevices - activeDevices;
 
-        // Attempt to fetch performance data
-        let performanceData = [];
-        try {
-          const performanceResponse = await axios.get('http://localhost:5000/api/robot-performance/last-7-days');
-          performanceData = performanceResponse.data;
-        } catch (performanceError) {
-          console.warn('No performance data available:', performanceError);
-        }
+        const performanceData = performanceResponse.data;
 
         setDashboardData({
           multicastGroups: {
@@ -84,10 +141,17 @@ const Dashboard = () => {
             activeCount: activeDevices,
             inactiveCount: inactiveDevices
           },
-          performanceData: performanceData
+          performanceData: performanceData,
+          energyStats: {
+            // Example calculations - adjust based on your actual data
+            totalEnergyGenerated: performanceData.reduce((sum, day) => 
+              sum + (day.total_panels_cleaned * 10), 0), // Hypothetical energy conversion
+            totalPanelsCleaned: performanceData.reduce((sum, day) => 
+              sum + day.total_panels_cleaned, 0)
+          }
         });
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error('Dashboard data fetch error:', error);
       }
     };
 
@@ -96,150 +160,93 @@ const Dashboard = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  const cardStyles = {
-    multicastGroups: {
-      background: 'linear-gradient(145deg, #e6f2ff, #b3d9ff)',
-      icon: { color: '#1976d2' }
-    },
-    totalDevices: {
-      background: 'linear-gradient(145deg, #f0f0f0, #e0e0e0)',
-      icon: { color: '#616161' }
-    },
-    activeDevices: {
-      background: 'linear-gradient(145deg, #e6ffe6, #b3ffb3)',
-      icon: { color: '#2e7d32' }
-    },
-    inactiveDevices: {
-      background: 'linear-gradient(145deg, #ffebee, #ffcdd2)',
-      icon: { color: '#d32f2f' }
-    }
-  };
+  // Limit performance data to last 7 points
+  const limitedPerformanceData = limitDataPoints(dashboardData.performanceData);
 
-  // Render card component (unchanged)
-  const renderStatCard = (title, count, style, Icon) => (
-    <Grid item xs={12} sm={6} md={3}>
-      <Card 
-        sx={{ 
-          background: style.background,
-          boxShadow: 3,
-          borderRadius: 2
-        }}
-      >
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box>
-              <Typography variant="subtitle1" color="text.secondary">
-                {title}
-              </Typography>
-              <Typography variant="h4" fontWeight="bold">
-                {count}
-              </Typography>
-            </Box>
-            <Icon 
-              sx={{ 
-                ...style.icon, 
-                fontSize: 48, 
-                opacity: 0.7 
-              }} 
-            />
-          </Box>
-        </CardContent>
-      </Card>
-    </Grid>
-  );
-
-   return (
-    <Box sx={{ flexGrow: 1, p: 2 }}>
-      {/* Statistics Cards */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {renderStatCard(
-          'Multicast Groups', 
-          dashboardData.multicastGroups.totalCount, 
-          cardStyles.multicastGroups, 
-          DeviceHubIcon
-        )}
-        {renderStatCard(
-          'Total Devices', 
-          dashboardData.devices.totalCount, 
-          cardStyles.totalDevices, 
-          DevicesIcon
-        )}
-        {renderStatCard(
-          'Active Devices', 
-          dashboardData.devices.activeCount, 
-          cardStyles.activeDevices, 
-          ActiveIcon
-        )}
-        {renderStatCard(
-          'Inactive Devices', 
-          dashboardData.devices.inactiveCount, 
-          cardStyles.inactiveDevices, 
-          InactiveIcon
-        )}
+  return (
+    <Box sx={{ 
+      flexGrow: 1, 
+      p: 3, 
+      backgroundColor: colors.background 
+    }}>
+      {/* Statistics Grid */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {[
+          { 
+            title: 'Multicast Groups', 
+            value: dashboardData.multicastGroups.totalCount,
+            icon: DeviceHubIcon,
+            color: colors.primary
+          },
+          { 
+            title: 'Total Devices', 
+            value: dashboardData.devices.totalCount,
+            icon: DevicesIcon,
+            color: colors.info
+          },
+          { 
+            title: 'Active Devices', 
+            value: dashboardData.devices.activeCount,
+            icon: ActiveIcon,
+            color: colors.success
+          },
+          { 
+            title: 'Inactive Devices', 
+            value: dashboardData.devices.inactiveCount,
+            icon: InactiveIcon,
+            color: colors.secondary
+          }
+        ].map((cardData, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <StatCard {...cardData} />
+          </Grid>
+        ))}
       </Grid>
 
-      {/* Performance Charts */}
-      <Grid container spacing={2}>
-        {/* Panels Cleaned Chart */}
+      {/* Performance Visualizations */}
+      <Grid container spacing={3}>
+        {/* Panels Cleaned Bar Chart */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card elevation={3}>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 2 }}>
-                Panels Cleaned
+                Panels Cleaned Over Time
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={dashboardData.performanceData}>
+                <BarChart data={limitedPerformanceData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
-                  <YAxis label={{ value: 'Panels', angle: -90, position: 'insideLeft' }} />
+                  <YAxis label={{ value: 'Panels Cleaned', angle: -90, position: 'insideLeft' }} />
                   <Tooltip />
-                  <Legend />
-                  {dashboardData.performanceData.length > 0 && 
-                    Object.keys(dashboardData.performanceData[0])
-                      .filter(key => key.startsWith('device_'))
-                      .map((deviceKey, index) => (
-                        <Line 
-                          key={deviceKey}
-                          type="monotone" 
-                          dataKey={deviceKey} 
-                          stroke={`hsl(${index * 60}, 70%, 50%)`}
-                          activeDot={{r: 8}}
-                        />
-                      ))
-                  }
-                </LineChart>
+                  <Bar 
+                    dataKey="total_panels_cleaned" 
+                    fill={colors.primary} 
+                  />
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Battery Discharge Cycle Chart */}
+        {/* Battery Discharge Line Chart */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card elevation={3}>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 2 }}>
-                Battery Discharge Cycle 
+                Battery Discharge Trend
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={dashboardData.performanceData}>
+                <LineChart data={limitedPerformanceData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
-                  <YAxis label={{ value: 'Discharge Cycle', angle: -90, position: 'insideLeft' }} />
+                  <YAxis label={{ value: 'Discharge (%)', angle: -90, position: 'insideLeft' }} />
                   <Tooltip />
-                  <Legend />
-                  {dashboardData.performanceData.length > 0 && 
-                    Object.keys(dashboardData.performanceData[0])
-                      .filter(key => key.startsWith('battery_'))
-                      .map((deviceKey, index) => (
-                        <Line 
-                          key={deviceKey}
-                          type="monotone" 
-                          dataKey={deviceKey} 
-                          stroke={`hsl(${index * 60 + 180}, 70%, 50%)`}
-                          activeDot={{r: 8}}
-                        />
-                      ))
-                  }
+                  <Line 
+                    type="monotone" 
+                    dataKey="avg_battery_discharge" 
+                    stroke={colors.secondary}
+                    strokeWidth={2}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>

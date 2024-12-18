@@ -29,7 +29,7 @@ const SideMenu = ({ collapsed, onCollapse, onLogout }) => {
       color: '#0DB39E'
     },
     {
-      label: 'Devices',
+      label: 'Robots',
       key: '/devices',
       icon: <LaptopOutlined />,
       color: '#0DB39E'
