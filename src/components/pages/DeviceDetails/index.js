@@ -250,7 +250,7 @@ function DeviceDetails() {
             mb: isMobile ? 2 : 0
           }}
         >
-          Robot Details: {deviceData.CH2}
+          Robot Details: {deviceData.CH1}
         </Typography>
         <Tooltip title="Refresh Device Data">
           <IconButton 
