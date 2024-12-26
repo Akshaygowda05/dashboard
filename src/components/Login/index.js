@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Form, Input, Button, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -13,52 +13,54 @@ const Login = ({ onLogin }) => {
 
   const handleLogin = (values) => {
     const { username, password } = values;
-
-    // Hardcoded credentials check
     if (username === 'admin' && password === 'admin') {
-      // Call the onLogin prop
       onLogin();
-
-      // Show success message
       message.success('Login Successful!');
-
-      // Navigate to devices page
       navigate('/');
     } else {
       message.error('Invalid username or password');
     }
   };
 
+  useEffect(() => {
+    // Add fade-in class after component mounts
+    const taglines = document.querySelectorAll('.tagline');
+    taglines.forEach((tagline, index) => {
+      setTimeout(() => {
+        tagline.classList.add('visible');
+      }, index * 400);
+    });
+  }, []);
+
   return (
     <div 
       className="login-background"
-    style={{
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  height: '100vh',
-  backgroundImage: "url('/solarpannel.jpg')",
-  backgroundSize: 'cover',
-  backgroundPosition: 'center center',
-  backgroundBlendMode: 'multiply', // Use 'multiply' for stronger contrast with the background
-  backgroundColor: 'rgba(0, 0, 0, 0.3)', // Darker, more subtle overlay for contrast
-}}
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundImage: "url('/solarpannel.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundBlendMode: 'multiply',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+      }}
     >
       <div 
         className="login-container"
         style={{
-          width: 350, // Slightly wider
-          padding: 30, // More padding
+          width: 350,
+          padding: 30,
           backgroundColor: 'white',
-          borderRadius: 12, // More rounded corners
-          boxShadow: '0 10px 25px rgba(0,0,0,0.1)', // Enhanced shadow
+          borderRadius: 12,
+          boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
           textAlign: 'center',
           position: 'relative',
           overflow: 'hidden',
-          border: '1px solid rgba(13, 179, 158, 0.2)', // Subtle border with primary color
+          border: '1px solid rgba(13, 179, 158, 0.2)',
         }}
       >
-        {/* Decorative accent */}
         <div 
           style={{
             position: 'absolute',
@@ -70,62 +72,65 @@ const Login = ({ onLogin }) => {
           }}
         />
 
-        {/* Company Logo */}
         <img
           src="Aegeus-technologies-logo.png"
           alt="Company Logo"
           style={{
-            width: '120px', // Slightly larger
+            width: '150px',
             marginBottom: 25,
-            marginLeft:70,
+            marginLeft: 70,
             borderRadius: 8,
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
           }}
         />
 
-        <h2 style={{ 
-          marginBottom: 30, 
-          color: '#0DB39E',
-          fontWeight: 600,
-          fontSize: '1.8rem'
+        <div className="taglines-container" style={{
+          marginBottom: 30,
+          position: 'relative'
         }}>
-          Welcome Back
-        </h2>
-
-        {/* Partner Logos */}
-        <div 
-          style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            marginBottom: 25,
-            opacity: 0.7,
-          }}
-        >
-          <img
-            src="vvdn-logo.webp"
-            alt="Partner 1"
-            style={{ 
-              width: '90px', 
-              margin: '0 15px',
-              filter: 'grayscale(30%)',
-              transition: 'transform 0.3s ease',
+          <h2 
+            className="tagline"
+            style={{
+              color: '#0DB39E',
+              fontWeight: 500,
+              fontSize: '0.73rem',
+              margin: '0 0 10px 0',
+              opacity: 0,
+              transform: 'translateY(20px)',
+              transition: 'all 0.6s ease-out',
             }}
-            onMouseOver={(e) => e.target.style.transform = 'scale(1.1)'}
-            onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-          />
-          <img
-            src="orante.png"
-            alt="Partner 2"
-            style={{ 
-              width: '90px', 
-              margin: '0 15px',
-              filter: 'grayscale(30%)',
-              transition: 'transform 0.3s ease',
+          >
+            Protecting Assets
+          </h2>
+          <h2 
+            className="tagline"
+            style={{
+              color: '#0DB39E',
+              fontWeight: 500,
+              fontSize: '0.73rem',
+              margin: 0,
+              opacity: 0,
+              transform: 'translateY(20px)',
+              transition: 'all 0.6s ease-out',
             }}
-            onMouseOver={(e) => e.target.style.transform = 'scale(1.1)'}
-            onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-          />
+          >
+            Improving Efficiency
+          </h2>
         </div>
+
+        <style>
+          {`
+            .tagline.visible {
+              opacity: 1 !important;
+              transform: translateY(0) !important;
+            }
+            
+            .tagline:hover {
+              transform: scale(1.05) !important;
+              transition: transform 0.3s ease !important;
+            }
+          `}
+        </style>
 
         <Form
           name="login"
@@ -165,7 +170,7 @@ const Login = ({ onLogin }) => {
                 width: '100%',
                 backgroundColor: '#0DB39E',
                 borderColor: '#0DB39E',
-                height: '45px', // Larger button
+                height: '45px',
                 fontSize: '16px',
                 fontWeight: 600,
                 borderRadius: 8,
@@ -186,7 +191,6 @@ const Login = ({ onLogin }) => {
           </Form.Item>
         </Form>
 
-        {/* Optional: Forgot Password Link */}
         <div 
           style={{ 
             marginTop: 16, 

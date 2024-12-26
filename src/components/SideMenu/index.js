@@ -9,8 +9,11 @@ import {
   MenuFoldOutlined, 
   RobotOutlined,
   HomeOutlined,
-  BarChartOutlined
+  BarChartOutlined,
+  SlidersOutlined
+  
 } from '@ant-design/icons';
+
 
 const SideMenu = ({ collapsed, onCollapse, onLogout }) => {
   const navigate = useNavigate();
@@ -41,9 +44,15 @@ const SideMenu = ({ collapsed, onCollapse, onLogout }) => {
       color: '#0DB39E'
     },
     {
-      label: 'RobotStatus',
+      label: 'Robot Status',
       key: '/robotStatus',
       icon: <RobotOutlined />,
+      color: '#0DB39E'
+    },
+    {
+      label: 'Robots Configuration',
+      key: '/configuration',
+      icon: <SlidersOutlined />,
       color: '#0DB39E'
     },
     {

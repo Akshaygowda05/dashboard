@@ -1,39 +1,57 @@
-import { RobotFilled } from "@ant-design/icons";
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { message } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { RobotFilled } from '@ant-design/icons';
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "http://192.168.0.239:5000/api";
 const ITEMS_PER_PAGE = 10; // Number of devices per page
 
-function Devices() {
-  const [devices, setDevices] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+function Devices({ humidityThreshold, rainThreshold, windSpeedThreshold }) {
+  const [devices, setDevices] = useState([]); // State to store devices
+  const [currentPage, setCurrentPage] = useState(1); // Current page for pagination
+  const [loading, setLoading] = useState(true); // Loading state
+  const [buttonsDisabled, setButtonsDisabled] = useState(false); // Disable buttons if weather exceeds threshold
+  const navigate = useNavigate(); // Navigation hook
 
-  // Fetch devices from the API
+  // Fetch devices and weather data from the API
   useEffect(() => {
-    async function fetchDevices() {
+    async function fetchData() {
       try {
+        // Fetch weather data
+        const weatherResponse = await fetch(`${API_BASE_URL}/gateway`);
+        if (weatherResponse.ok) {
+          const data = await weatherResponse.json();
+          const weatherData = data.weather;
+
+          // Check if weather conditions exceed thresholds
+          const shouldDisableButtons = 
+            weatherData.humidity > humidityThreshold ||
+            weatherData.rain > rainThreshold ||
+            weatherData.windSpeed > windSpeedThreshold;
+
+          setButtonsDisabled(shouldDisableButtons); // Disable buttons if weather conditions exceed thresholds
+        }
+
+        // Fetch devices data
         const response = await fetch(`${API_BASE_URL}/devices`);
         if (!response.ok) throw new Error("Failed to fetch devices");
-        const data = await response.json();
-        setDevices(data.result);
+        const devicesData = await response.json();
+        setDevices(devicesData.result); // Set devices data to state
       } catch (error) {
         console.error("Fetch error:", error);
-        alert("Failed to load devices");
+        message.error("Failed to fetch weather data");
       } finally {
-        setLoading(false);
+        setLoading(false); // Set loading to false once data is fetched
       }
     }
 
-    fetchDevices();
-  }, []);
+    fetchData(); // Call the fetch function when the component mounts
+  }, [humidityThreshold, rainThreshold, windSpeedThreshold]); // Re-run when thresholds change
 
-  // Calculate the number of pages
+  // Calculate the number of pages for pagination
   const totalPages = Math.ceil(devices.length / ITEMS_PER_PAGE);
 
-  // Get the devices for the current page
+  // Get devices for the current page
   const currentDevices = devices.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -44,13 +62,23 @@ function Devices() {
     setCurrentPage(page);
   };
 
+  // Handle device toggle (on/off/gohome)
+  const handleToggleDevice = (devEui, state) => {
+    if (buttonsDisabled) {
+      alert("Cannot operate robot due to weather conditions");
+      return;
+    }
+    toggleDeviceDownlink(devEui, state); // Send downlink command to the device
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">
-  Robot's <span className="inline-block align-middle"><RobotFilled className="text-2xl" /></span>
-</h1>
+        Robot's <RobotFilled className="inline-block align-middle text-2xl" />
+      </h1>
+
       {loading ? (
-        <p>Loading devices...</p>
+        <p>Loading devices...</p> // Show loading text when data is being fetched
       ) : (
         <>
           <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
@@ -66,29 +94,33 @@ function Devices() {
               {currentDevices.map((device) => (
                 <tr key={device.devEui} className="border-b hover:bg-gray-100">
                   <td className="px-6 py-4 text-sm text-gray-900">{device.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{new Date(device.lastSeenAt).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {new Date(device.lastSeenAt).toLocaleString()}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-500">{device.description || "N/A"}</td>
                   <td className="px-6 py-4 space-x-2">
                     <button
-                      onClick={() => toggleDeviceDownlink(device.devEui, "on")}
+                      onClick={() => handleToggleDevice(device.devEui, "on")}
                       className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
                     >
                       Turn On
                     </button>
                     <button
-                      onClick={() => toggleDeviceDownlink(device.devEui, "off")}
+                      onClick={() => handleToggleDevice(device.devEui, "off")}
+                      disabled={buttonsDisabled}
                       className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm"
                     >
                       Turn Off
                     </button>
                     <button
-                      onClick={() => toggleDeviceDownlink(device.devEui, "gohome")}
+                      onClick={() => handleToggleDevice(device.devEui, "gohome")}
                       className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm"
                     >
-                      ReturnToDock
+                      Return To Dock
                     </button>
                     <button
-                      onClick={() => navigate(`/device/${device.devEui}`)} // Navigate to device details
+                      onClick={() => navigate(`/device/${device.devEui}`)} // Navigate to device details page
+                      disabled={buttonsDisabled}
                       className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
                     >
                       View
@@ -133,6 +165,7 @@ function Devices() {
   );
 }
 
+// Toggle device downlink command
 async function toggleDeviceDownlink(devEui, state) {
   const dataMap = {
     on: "Ag==",
@@ -148,7 +181,7 @@ async function toggleDeviceDownlink(devEui, state) {
       },
       body: JSON.stringify({
         queueItem: {
-          data: dataMap[state],
+          data: dataMap[state], // Command based on state
           fCnt: 0,
           fPort: 1,
         },

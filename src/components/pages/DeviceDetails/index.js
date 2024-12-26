@@ -47,7 +47,7 @@ import {
   Error as ErrorIcon
 } from "@mui/icons-material";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "http://192.168.0.239:5000/api";
 
 const channelMapping = {
   "CH1": { name: "Robot ID", icon: RobotIcon },
